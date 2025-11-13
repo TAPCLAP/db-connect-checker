@@ -2,15 +2,6 @@
 
 Утилита для проверки подключений к базам данных MySQL и MongoDB с поддержкой экспорта метрик для Prometheus.
 
-## Возможности
-
-- ✅ Проверка подключений к MySQL и MongoDB базам данных
-- ✅ Поддержка множественных MySQL подключений одновременно
-- ✅ Режим экспортера метрик для Prometheus
-- ✅ Поддержка TLS/SSL подключений для MySQL
-- ✅ Автоматические повторные попытки при неудачном подключении
-- ✅ Периодические проверки в фоновом режиме
-- ✅ Docker образ на базе scratch для минимального размера
 
 ## Режимы работы
 
@@ -32,7 +23,7 @@
 ### Сборка из исходников
 
 ```bash
-git clone https://github.com/OrangeAppsRu/db-connect-checker.git
+git clone https://github.com/TAPCLAP/db-connect-checker.git
 cd db-connect-checker
 go build -o db-connect-checker .
 ```
@@ -129,7 +120,9 @@ export MYSQL_PORT_0=3306
 | `MYSQL_PASS_N` | Пароль | Да |
 | `MYSQL_HOST_N` | Хост | Да |
 | `MYSQL_PORT_N` | Порт | Нет (по умолчанию `3306`) |
-| `MYSQL_TLS_N` | Использовать TLS (`true`/`false`) | Нет |
+| `MYSQL_TLS_N` | Использовать TLS (`true`/`false`) | Нет (по умолчанию `false`) |
+
+`_N` - не обязателен. Можно указать только один сервер без индексов: `MYSQL_NAME`, `MYSQL_USER`, `MYSQL_PASS`, `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_TLS`.
 
 **Пример для нескольких баз:**
 ```bash
@@ -204,11 +197,11 @@ docker build -f docker/checker/Dockerfile -t db-connect-checker .
 ```bash
 docker run --rm \
   -e DB_TYPE=mysql \
-  -e MYSQL_NAME_0=mydb \
-  -e MYSQL_USER_0=root \
-  -e MYSQL_PASS_0=password \
-  -e MYSQL_HOST_0=mysql-server \
-  -e MYSQL_PORT_0=3306 \
+  -e MYSQL_NAME=mydb \
+  -e MYSQL_USER=root \
+  -e MYSQL_PASS=password \
+  -e MYSQL_HOST=mysql-server \
+  -e MYSQL_PORT=3306 \
   db-connect-checker
 ```
 
@@ -221,11 +214,11 @@ docker run -d \
   -e DB_TYPE=mysql \
   -e EXPORTER_PORT=38080 \
   -e CHECK_INTERVAL=30 \
-  -e MYSQL_NAME_0=mydb \
-  -e MYSQL_USER_0=root \
-  -e MYSQL_PASS_0=password \
-  -e MYSQL_HOST_0=mysql-server \
-  -e MYSQL_PORT_0=3306 \
+  -e MYSQL_NAME=mydb \
+  -e MYSQL_USER=root \
+  -e MYSQL_PASS=password \
+  -e MYSQL_HOST=mysql-server \
+  -e MYSQL_PORT=3306 \
   -p 38080:38080 \
   db-connect-checker
 ```
@@ -255,21 +248,21 @@ spec:
       value: "mysql"
     - name: TRIES
       value: "30"
-    - name: MYSQL_NAME_0
+    - name: MYSQL_NAME
       value: "mydb"
-    - name: MYSQL_USER_0
+    - name: MYSQL_USER
       valueFrom:
         secretKeyRef:
           name: db-credentials
           key: username
-    - name: MYSQL_PASS_0
+    - name: MYSQL_PASS
       valueFrom:
         secretKeyRef:
           name: db-credentials
           key: password
-    - name: MYSQL_HOST_0
+    - name: MYSQL_HOST
       value: "mysql-service"
-    - name: MYSQL_PORT_0
+    - name: MYSQL_PORT
       value: "3306"
   containers:
   - name: myapp
@@ -305,19 +298,19 @@ spec:
           value: "38080"
         - name: CHECK_INTERVAL
           value: "30"
-        - name: MYSQL_NAME_0
+        - name: MYSQL_NAME
           value: "mydb"
-        - name: MYSQL_USER_0
+        - name: MYSQL_USER
           valueFrom:
             secretKeyRef:
               name: db-credentials
               key: username
-        - name: MYSQL_PASS_0
+        - name: MYSQL_PASS
           valueFrom:
             secretKeyRef:
               name: db-credentials
               key: password
-        - name: MYSQL_HOST_0
+        - name: MYSQL_HOST
           value: "mysql-service"
         ports:
         - containerPort: 38080
@@ -349,11 +342,11 @@ spec:
 docker run --rm \
   -e DB_TYPE=mysql \
   -e TRIES=5 \
-  -e MYSQL_NAME_0=production_db \
-  -e MYSQL_USER_0="${DB_USER}" \
-  -e MYSQL_PASS_0="${DB_PASS}" \
-  -e MYSQL_HOST_0="${DB_HOST}" \
-  -e MYSQL_PORT_0=3306 \
+  -e MYSQL_NAME=production_db \
+  -e MYSQL_USER="${DB_USER}" \
+  -e MYSQL_PASS="${DB_PASS}" \
+  -e MYSQL_HOST="${DB_HOST}" \
+  -e MYSQL_PORT=3306 \
   db-connect-checker
 
 if [ $? -eq 0 ]; then
@@ -366,33 +359,6 @@ fi
 ```
 
 ## Разработка
-
-### Структура проекта
-
-```
-.
-├── main.go                 # Точка входа приложения
-├── go.mod                  # Go модуль
-├── go.sum                  # Go зависимости
-├── envs.sh                 # Пример переменных окружения
-├── METRICS_USAGE.md        # Документация по метрикам
-├── README.md               # Этот файл
-├── docker/
-│   └── checker/
-│       └── Dockerfile      # Dockerfile для сборки
-└── pkg/
-    ├── metrics/
-    │   ├── mysql.go        # Экспортер метрик
-    │   └── example_test.go # Тесты
-    ├── mysqlcheck/
-    │   ├── main.go         # Логика проверки MySQL
-    │   └── main_test.go    # Тесты
-    ├── types/
-    │   └── main.go         # Типы данных
-    └── util/
-        ├── main.go         # Утилиты
-        └── main_test.go    # Тесты
-```
 
 ### Запуск тестов
 
@@ -417,10 +383,7 @@ golangci-lint run
 
 [MIT License](LICENSE)
 
-## Автор
-
-OrangeApps
 
 ## Поддержка
 
-Если у вас возникли проблемы или есть предложения, создайте [Issue](https://github.com/OrangeAppsRu/db-connect-checker/issues).
+Если у вас возникли проблемы или есть предложения, создайте [Issue](https://github.com/TAPCLAP/db-connect-checker/issues).

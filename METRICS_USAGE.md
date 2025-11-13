@@ -4,7 +4,7 @@
 
 Экспортер метрик для мониторинга подключений к MySQL базам данных. Предоставляет метрики для Prometheus.
 
-Экспортер выполняет проверки подключений **периодически в фоновом режиме** (по умолчанию каждые 30 секунд), а при запросе `/metrics` просто отдает уже готовые метрики из памяти. Это означает, что запрос метрик не блокируется проверками соединений и выполняется очень быстро.
+Экспортер выполняет проверки подключений **периодически в фоновом режиме** (по умолчанию каждые 30 секунд).
 
 ## Метрики
 
@@ -105,11 +105,11 @@ docker run -d \
   -e DB_TYPE=mysql \
   -e EXPORTER_PORT=8080 \
   -e CHECK_INTERVAL=30 \
-  -e MYSQL_1_NAME=mydb \
-  -e MYSQL_1_USER=root \
-  -e MYSQL_1_PASS=password \
-  -e MYSQL_1_HOST=mysql-server \
-  -e MYSQL_1_PORT=3306 \
+  -e MYSQL_NAME=mydb \
+  -e MYSQL_USER=root \
+  -e MYSQL_PASS=password \
+  -e MYSQL_HOST=mysql-server \
+  -e MYSQL_PORT=3306 \
   -p 8080:8080 \
   db-connect-checker
 ```
