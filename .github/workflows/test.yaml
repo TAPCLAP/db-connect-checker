@@ -1,0 +1,47 @@
+name: Go Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@main
+
+      - name: Set up Go
+        uses: actions/setup-go@main
+        with:
+          go-version: '1.24'
+
+      - name: Cache Go modules
+        uses: actions/cache@main
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: |
+          go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Generate coverage summary
+        run: |
+          go tool cover -func=coverage.out | tee coverage.txt
+          PERCENT=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
+          echo "Total coverage: $PERCENT"
+          echo "<h2>Coverage Report</h2>" >> $GITHUB_STEP_SUMMARY
+          echo "<p>Total coverage: <b>$PERCENT</b></p>" >> $GITHUB_STEP_SUMMARY
+          echo "<pre>" >> $GITHUB_STEP_SUMMARY
+          cat coverage.txt >> $GITHUB_STEP_SUMMARY
+          echo "</pre>" >> $GITHUB_STEP_SUMMARY
